@@ -1,0 +1,90 @@
+rules_version = '2';
+// FAMILY SMART – Firestore security rules.
+// Everything is closed unless a rule below opens it.
+// A device belongs to the family only if families/{fam}/members/{its uid} exists.
+// The managing parent creates the family after signing in with Google; every other device joins
+// with a one-time code (invites/{code}) that she creates. No passwords are stored anywhere.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function authed() { return request.auth != null; }
+    function memberPath(fam, uid) { return /databases/$(database)/documents/families/$(fam)/members/$(uid); }
+    function invitePath(code) { return /databases/$(database)/documents/invites/$(code); }
+    function isMember(fam) { return authed() && exists(memberPath(fam, request.auth.uid)); }
+    function me(fam) { return get(memberPath(fam, request.auth.uid)).data; }
+    function isParent(fam) { return isMember(fam) && me(fam).role in ['admin', 'parent']; }
+    function isAdmin(fam) { return isMember(fam) && me(fam).role == 'admin'; }
+    function roleFits(d) {
+      return (d.user == 'par1' && d.role == 'admin') || (d.user == 'par2' && d.role == 'parent')
+          || (d.user in ['kid1', 'kid2'] && d.role == 'child');
+    }
+
+    // Which family this signed-in device belongs to.
+    match /users/{uid} {
+      allow get: if authed() && request.auth.uid == uid;
+      allow create, update: if authed() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['fam'])
+        && existsAfter(memberPath(request.resource.data.fam, uid));
+    }
+
+    // One-time connection codes: valid 48 hours, deleted when used.
+    match /invites/{code} {
+      allow get: if authed();
+      allow create: if code.size() == 10
+        && isAdmin(request.resource.data.fam)
+        && request.resource.data.keys().hasOnly(['fam', 'user', 'role', 'expires', 'by'])
+        && request.resource.data.by == request.auth.uid
+        && roleFits(request.resource.data)
+        && request.resource.data.expires < request.time + duration.value(49, 'h');
+      allow delete: if authed() && (isAdmin(resource.data.fam)
+        || getAfter(memberPath(resource.data.fam, request.auth.uid)).data.code == code);
+    }
+
+    match /families/{fam} {
+      allow get: if isMember(fam);
+      allow create: if authed()
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && request.resource.data.keys().hasOnly(['owner', 'createdAt'])
+        && request.resource.data.owner == request.auth.uid
+        && existsAfter(memberPath(fam, request.auth.uid));
+
+      match /members/{uid} {
+        allow get: if authed() && (request.auth.uid == uid || isMember(fam));
+        allow list: if isAdmin(fam);
+        allow create: if authed() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['user', 'role', 'code', 'device', 'at'])
+          && roleFits(request.resource.data)
+          && (
+            // the founder, in the same write that creates the family
+            (!exists(/databases/$(database)/documents/families/$(fam))
+              && getAfter(/databases/$(database)/documents/families/$(fam)).data.owner == uid
+              && request.resource.data.user == 'par1' && request.resource.data.code == '')
+            ||
+            // a device with a valid code, which is deleted in the same write
+            (request.resource.data.code is string && request.resource.data.code.size() == 10
+              && exists(invitePath(request.resource.data.code))
+              && get(invitePath(request.resource.data.code)).data.fam == fam
+              && get(invitePath(request.resource.data.code)).data.user == request.resource.data.user
+              && get(invitePath(request.resource.data.code)).data.role == request.resource.data.role
+              && get(invitePath(request.resource.data.code)).data.expires > request.time
+              && !existsAfter(invitePath(request.resource.data.code)))
+          );
+        allow delete: if isAdmin(fam) && request.auth.uid != uid;
+      }
+
+      // The family's data: one document per part ("slice").
+      match /st/{slice} {
+        allow read: if isParent(fam) || (isMember(fam) && !(slice in ['fmsg', 'shop', 'appts']));
+        allow delete: if isParent(fam);
+        allow create, update: if isParent(fam)
+          || (isMember(fam) && me(fam).role == 'child'
+              && (slice in ['done', 'prep', 'requests', 'events'] || slice == 'prog_' + me(fam).user));
+      }
+      match /school_events/{id} {
+        allow read: if isMember(fam);
+        allow write: if isParent(fam);
+      }
+    }
+  }
+}

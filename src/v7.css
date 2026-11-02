@@ -1,0 +1,98 @@
+
+/* ================= v7 ================= */
+/* cloud status chip */
+.cloud{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:700;background:var(--surface-2);color:var(--ink)}
+.cloud svg.i{width:16px;height:16px}
+.cloud.ok{background:var(--ok-bg);color:var(--ok-fg)}
+.cloud.warn,.cloud.ro{background:var(--warn-bg);color:var(--warn-fg)}
+.cloud.local{background:var(--bad-bg);color:var(--bad-fg)}
+@media (max-width:480px){.cloud span{display:none}.cloud{padding:8px}}
+
+/* compact month: number, training dot, event count */
+.mtop{display:flex;align-items:center;gap:3px;min-width:0}
+.mtop .mnum{flex:none}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--teal);flex:none}
+.mcount{margin-inline-start:auto;min-width:18px;height:18px;border-radius:9px;background:var(--ink);color:var(--surface);font-size:10.5px;font-weight:800;display:grid;place-items:center;padding:0 4px;font-variant-numeric:tabular-nums}
+@media (max-width:759px){
+  .mcell{min-height:64px;padding:4px 3px}
+  .mnum{width:26px;height:26px;font-size:13px}
+  .mcount{min-width:16px;height:16px;font-size:10px}
+  .mini{font-size:9.5px;padding:0 2px}
+  .mhead div{padding-block:8px;font-size:12px}
+}
+@media (max-width:359px){.mini{font-size:9px}.mcell{padding:3px 2px}.mnum{width:24px;height:24px;font-size:12px}}
+
+/* day card (bottom sheet) – personal colour band */
+.sheet-day{padding-top:0;overflow:auto}
+.dayhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin:0 -20px 4px;padding:22px 20px 16px;background:linear-gradient(135deg,var(--k1),var(--k2));color:#171717;border-radius:26px 26px 0 0}
+.dayhead h2{color:#171717;font-size:24px}
+.dayhead .eyebrow{color:#171717;opacity:.85}
+.dayhead .small{font-weight:700}
+.dayhead .icon-btn{background:rgba(255,255,255,.75)}
+:root[data-kid="kid2"] .dayhead{background:#171717;color:#FFFFFF}
+:root[data-kid="kid2"] .dayhead h2,:root[data-kid="kid2"] .dayhead .eyebrow{color:#FFFFFF}
+:root[data-kid="kid2"] .dayhead .small{color:var(--teal)}
+
+/* exam card extras */
+.soft-card{box-shadow:none!important;background:var(--surface-2)!important;padding:14px!important;gap:8px!important}
+.soft-card h3{font-size:16px}
+.xrow{display:grid;gap:3px}
+.xrow b{font-size:14px}
+.xlist{margin:0;padding-inline-start:18px;display:grid;gap:4px;font-size:14px}
+.tchips{display:flex;flex-wrap:wrap;gap:6px}
+.tchips span{background:var(--surface);border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600}
+
+/* flashcards */
+.fcset h3{display:flex;align-items:center;gap:8px}
+.fc-q{font-size:22px;line-height:1.35}
+.fc-opts{display:grid;gap:8px}
+.fc-opt{min-height:52px;border:2px solid var(--line);background:var(--surface);border-radius:16px;padding:10px 14px;text-align:start;font-weight:600;font-size:16px;color:var(--ink)}
+.fc-opt:hover:not(:disabled){border-color:var(--k1)}
+.fc-opt.right{border-color:var(--ok-fg);background:var(--ok-bg);color:var(--ok-fg)}
+.fc-opt.wrong{border-color:var(--bad-fg);background:var(--bad-bg);color:var(--bad-fg)}
+.fc-opt:disabled{cursor:default}
+.fc-done{display:grid;justify-items:center;gap:4px;padding:18px;background:var(--surface-2);border-radius:20px}
+.fc-done b{font-size:48px;font-weight:800;color:var(--k1-ink)}
+#fc-num{font-size:20px;max-width:12rem}
+
+/* parents space */
+.inline-form{gap:8px}
+.shop-row{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:12px;padding:6px 8px 6px 10px;min-height:48px}
+.shop-row label{flex:1;display:flex;align-items:center;gap:10px;font-weight:600;min-width:0}
+.shop-row input{width:22px;height:22px;accent-color:var(--k1);flex:none}
+.shop-row.bought span{text-decoration:line-through;opacity:.6}
+.shop-row .icon-btn{width:38px;height:38px;box-shadow:none;background:var(--surface)}
+
+/* navigation: "more" on phones */
+.nav .more-btn{display:none}
+.more-item{display:flex;align-items:center;gap:12px;min-height:56px;border:0;border-radius:16px;background:var(--surface-2);padding:0 16px;font-size:16px;font-weight:600;color:var(--ink);text-align:start}
+@media (max-width:720px){
+  .nav .more-tab{display:none}
+  .nav .more-btn{display:flex;flex:1 0 56px;min-height:56px;flex-direction:column;justify-content:center;align-items:center;gap:2px;border:0;background:transparent;border-radius:18px;color:#FFFFFF;font-size:11.5px;font-weight:600}
+  .nav .more-btn svg.i{width:21px;height:21px}
+  .nav .more-btn.on{background:var(--k1);color:#171717}
+  .nav{overflow-x:visible}
+  .nav button{flex:1 1 0;min-width:0}
+}
+.req-tag,.tag{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.row-main{flex-wrap:wrap}
+/* event count: a corner marker on phones only (desktop already lists "+N more") */
+.mcell{position:relative}
+.mcount{display:none}
+@media (max-width:759px){
+  .mcount{display:grid;position:absolute;top:3px;inset-inline-end:3px;margin:0;min-width:15px;height:15px;border-radius:8px;background:var(--k2);color:#171717;font-size:9.5px;font-weight:800;padding:0 3px;box-shadow:0 0 0 2px var(--surface)}
+  :root[data-kid="kid1"] .mcount{background:var(--blue)}
+  .tdot{width:6px;height:6px}
+}
+
+/* web version: connect-this-device screen */
+.gate{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px 16px calc(24px + env(safe-area-inset-bottom));background:linear-gradient(150deg,#FF3B8D 0%,#2979FF 55%,#00CDB7 100%)}
+.gate-card{width:100%;max-width:420px;background:var(--surface);border-radius:28px;padding:28px 22px;display:grid;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.gate-brand{font-weight:800;letter-spacing:.06em;font-size:15px;color:var(--ink);opacity:.7}
+.gate h1{margin:0;font-size:28px}
+.gate-sub{margin:0;line-height:1.6}
+.gate-or{text-align:center;font-size:13px;font-weight:700;opacity:.65}
+.gate-foot{margin:0}
+.gate .btn{width:100%;justify-content:center}
+#web-code{font-size:22px;letter-spacing:.12em;text-align:center;direction:ltr;text-transform:uppercase}
+.web-code{font-size:30px;font-weight:800;letter-spacing:.14em;text-align:center;padding:6px 0;font-variant-numeric:tabular-nums}
