@@ -133,13 +133,15 @@
     try { await fdb.doc(`families/${W.fam}/members/${uid}`).delete(); W.confirmRemove = null; await loadMembers(); if (typeof toast === 'function') toast('המכשיר נותק'); }
     catch (e) { fail('לא הצלחתי לנתק את המכשיר.', e); }
   }
-  // One-time move of the data from the previous (Claude) version: a JSON file {slices:{name:{...}}, school_events:[...]}.
+  // Data file from Claude: {slices:{name:{...}}, school_events:[...]} – the first move from the previous version, or additions
+  // such as the exam bank and flashcards. Everything is merged in; nothing is removed.
   async function importFile(file) {
     if (!file) return;
     try {
       const data = JSON.parse(await file.text());
-      if (!data || !data.slices || !Array.isArray(data.school_events)) throw new Error('format');
-      W.importInfo = { data, name:file.name, slices:Object.keys(data.slices).length, events:data.school_events.length }; paint();
+      if (!data || !data.slices || typeof data.slices !== 'object') throw new Error('format');
+      data.school_events = Array.isArray(data.school_events) ? data.school_events : [];
+      W.importInfo = { data, name:file.name, slices:Object.keys(data.slices).length, events:data.school_events.length, what:data.summary || '' }; paint();
     } catch (e) { fail('הקובץ לא נראה כמו קובץ נתונים של FAMILY SMART.', e); }
   }
   async function importRun() {
@@ -197,10 +199,10 @@
         <div class="small">בתוקף ${CODE_HOURS} שעות, לשימוש פעם אחת. באייפון: פותחים ב-Safari את <span dir="ltr">${esc(siteURL())}</span>, כפתור השיתוף ← "הוספה למסך הבית", פותחים מהסמל החדש, ורק שם מקלידים את הקוד.</div></div>` : ''}
       <div class="rows">${list}</div>
       <button class="btn ghost" data-web="members">${W.members ? 'רענון הרשימה' : 'הצגת המכשירים המחוברים'}</button>
-      <details class="fold" ${W.importInfo ? 'open' : ''}><summary>העברת נתונים מהגרסה הקודמת</summary><div class="fold-body">
-        <p class="small">פעולה חד-פעמית: בוחרים את קובץ הנתונים שקיבלת, והכול נכנס לענן של המשפחה. שום דבר לא נמחק.</p>
+      <details class="fold" ${W.importInfo ? 'open' : ''}><summary>ייבוא קובץ נתונים</summary><div class="fold-body">
+        <p class="small">בוחרים קובץ נתונים שקיבלת מ-Claude (למשל מאגר מבחנים או כרטיסיות), והוא מתווסף לענן של המשפחה. שום דבר לא נמחק.</p>
         <input type="file" id="webimport" accept=".json,application/json">
-        ${W.importInfo ? `<div class="callout">בקובץ: ${W.importInfo.events} אירועים מלוח המבחנים ו-${W.importInfo.slices} חלקי נתונים.</div><button class="btn" data-web="import" ${W.busy ? 'disabled' : ''}>${W.busy ? 'מעביר…' : 'להעביר עכשיו'}</button>` : ''}
+        ${W.importInfo ? `<div class="callout">${W.importInfo.what ? esc(W.importInfo.what) : `בקובץ: ${W.importInfo.events ? W.importInfo.events + ' אירועים מלוח המבחנים ו-' : ''}${W.importInfo.slices} חלקי נתונים.`}</div><button class="btn" data-web="import" ${W.busy ? 'disabled' : ''}>${W.busy ? 'מעביר…' : 'להעביר עכשיו'}</button>` : ''}
       </div></details></div>`;
   }
 

@@ -838,6 +838,13 @@ main>.hero,main>.prep,main>.screen-head,main>section,main>.grid2,main>.days,main
 .gate .btn{width:100%;justify-content:center}
 #web-code{font-size:22px;letter-spacing:.12em;text-align:center;direction:ltr;text-transform:uppercase}
 .web-code{font-size:30px;font-weight:800;letter-spacing:.14em;text-align:center;padding:6px 0;font-variant-numeric:tabular-nums}
+
+/* exam bank */
+.bank-item{display:grid;gap:8px;padding:12px;border-radius:16px;background:var(--surface-2)}
+.card .bank-item{background:var(--surface-2)}
+.soft-card .bank-item{background:var(--surface)}
+.tchips span.hit{background:var(--exam-bg,#FFD6E7);font-weight:700;box-shadow:inset 0 0 0 2px var(--exam-dot,#FF3B8D)}
+.bankform{margin-top:2px}
 </style>
 </head>
 <body>
@@ -1409,13 +1416,15 @@ if (typeof module !== 'undefined') module.exports = FSCore;
     try { await fdb.doc(`families/${W.fam}/members/${uid}`).delete(); W.confirmRemove = null; await loadMembers(); if (typeof toast === 'function') toast('המכשיר נותק'); }
     catch (e) { fail('לא הצלחתי לנתק את המכשיר.', e); }
   }
-  // One-time move of the data from the previous (Claude) version: a JSON file {slices:{name:{...}}, school_events:[...]}.
+  // Data file from Claude: {slices:{name:{...}}, school_events:[...]} – the first move from the previous version, or additions
+  // such as the exam bank and flashcards. Everything is merged in; nothing is removed.
   async function importFile(file) {
     if (!file) return;
     try {
       const data = JSON.parse(await file.text());
-      if (!data || !data.slices || !Array.isArray(data.school_events)) throw new Error('format');
-      W.importInfo = { data, name:file.name, slices:Object.keys(data.slices).length, events:data.school_events.length }; paint();
+      if (!data || !data.slices || typeof data.slices !== 'object') throw new Error('format');
+      data.school_events = Array.isArray(data.school_events) ? data.school_events : [];
+      W.importInfo = { data, name:file.name, slices:Object.keys(data.slices).length, events:data.school_events.length, what:data.summary || '' }; paint();
     } catch (e) { fail('הקובץ לא נראה כמו קובץ נתונים של FAMILY SMART.', e); }
   }
   async function importRun() {
@@ -1473,10 +1482,10 @@ if (typeof module !== 'undefined') module.exports = FSCore;
         <div class="small">בתוקף ${CODE_HOURS} שעות, לשימוש פעם אחת. באייפון: פותחים ב-Safari את <span dir="ltr">${esc(siteURL())}</span>, כפתור השיתוף ← "הוספה למסך הבית", פותחים מהסמל החדש, ורק שם מקלידים את הקוד.</div></div>` : ''}
       <div class="rows">${list}</div>
       <button class="btn ghost" data-web="members">${W.members ? 'רענון הרשימה' : 'הצגת המכשירים המחוברים'}</button>
-      <details class="fold" ${W.importInfo ? 'open' : ''}><summary>העברת נתונים מהגרסה הקודמת</summary><div class="fold-body">
-        <p class="small">פעולה חד-פעמית: בוחרים את קובץ הנתונים שקיבלת, והכול נכנס לענן של המשפחה. שום דבר לא נמחק.</p>
+      <details class="fold" ${W.importInfo ? 'open' : ''}><summary>ייבוא קובץ נתונים</summary><div class="fold-body">
+        <p class="small">בוחרים קובץ נתונים שקיבלת מ-Claude (למשל מאגר מבחנים או כרטיסיות), והוא מתווסף לענן של המשפחה. שום דבר לא נמחק.</p>
         <input type="file" id="webimport" accept=".json,application/json">
-        ${W.importInfo ? `<div class="callout">בקובץ: ${W.importInfo.events} אירועים מלוח המבחנים ו-${W.importInfo.slices} חלקי נתונים.</div><button class="btn" data-web="import" ${W.busy ? 'disabled' : ''}>${W.busy ? 'מעביר…' : 'להעביר עכשיו'}</button>` : ''}
+        ${W.importInfo ? `<div class="callout">${W.importInfo.what ? esc(W.importInfo.what) : `בקובץ: ${W.importInfo.events ? W.importInfo.events + ' אירועים מלוח המבחנים ו-' : ''}${W.importInfo.slices} חלקי נתונים.`}</div><button class="btn" data-web="import" ${W.busy ? 'disabled' : ''}>${W.busy ? 'מעביר…' : 'להעביר עכשיו'}</button>` : ''}
       </div></details></div>`;
   }
 
@@ -2776,6 +2785,7 @@ function v7Normalize(st) {
   ['msgs', 'shop', 'appts'].forEach(k => { st.family[k] = st.family[k] || {}; });
   st.syncStatus = st.syncStatus || {};
   st.names = st.names || {};
+  st.bank = st.bank || {};
   for (const k in st.profiles || {}) if (st.profiles[k].mathGroup === undefined) st.profiles[k].mathGroup = '';
   // older one-time manual items move into the events list (same ids, so their checkmarks stay)
   if (st.added && st.added.length) {
@@ -2814,6 +2824,7 @@ const SLICES = {
   prog_kid1: { get:() => S.cardprog.kid1, put:v => { S.cardprog.kid1 = v; } },
   prog_kid2: { get:() => S.cardprog.kid2, put:v => { S.cardprog.kid2 = v; } },
   names:     { get:() => S.names, put:v => { S.names = v; } },
+  bank:      { get:() => S.bank, put:v => { S.bank = v; } },
   fmsg:      { get:() => S.family.msgs, put:v => { S.family.msgs = v; } },
   shop:      { get:() => S.family.shop, put:v => { S.family.shop = v; } },
   appts:     { get:() => S.family.appts, put:v => { S.family.appts = v; } },
@@ -3173,7 +3184,48 @@ function examExtras(e) {
   const cards = sets.length ? `<div class="actions">${sets.map(s => `<button class="btn" data-action="card-start" data-set="${H(s.id)}">${I('study')}תרגול בכרטיסיות · ${s.cards.length} שאלות</button>`).join('')}</div>` : '';
   return `<div class="card soft-card"><div class="panel-head"><h3>חומר למבחן</h3>${isParent() ? `<button class="btn soft" data-action="mat-edit" data-id="${H(e.id)}">${I('edit')}עריכת חומר</button>` : ''}</div>${mat}</div>${planHTML}${cards}`;
 }
-function v7EventExtras(e) { return examExtras(e) + customControls(e); }
+function v7EventExtras(e) { return examExtras(e) + bankForExam(e) + customControls(e); }
+
+/* ---------- exam bank: past exams the parents collected, matched to an upcoming exam by subject, grade and topics ---------- */
+const TOPIC_STOP = new Set(['של', 'עם', 'על', 'את', 'בין', 'או', 'גם', 'כולל', 'שונים', 'בעיות', 'חישוב', 'ייצוגים', 'שאלות']);
+function topicKeys(t) {   // rough Hebrew matching: drop a leading ו/ה, compare the first 4 letters ("זוויות" ~ "זווית")
+  return String(t || '').replace(/["'׳״()\-–,.:]/g, ' ').split(/\s+/).filter(w => w && !TOPIC_STOP.has(w))
+    .map(w => (w.length > 3 && 'וה'.includes(w[0]) ? w.slice(1) : w)).filter(w => w.length >= 3).map(w => w.slice(0, 4));
+}
+function bankMatches(e) {
+  const subj = e.subjects || [], m = materialFor(e), topics = (m && m.topics) || [];
+  const grades = (e.owners || []).map(k => profile(k).grade).filter(Boolean);
+  const want = new Set(topics.flatMap(topicKeys));
+  return Object.values(S.bank || {}).filter(b => b && !b.deleted && subj.includes(b.subject) && grades.includes(b.grade))
+    .map(b => ({ b, hit:(b.topics || []).filter(t => topicKeys(t).some(x => want.has(x))) }))
+    .filter(x => !want.size || x.hit.length).sort((a, c) => c.hit.length - a.hit.length);
+}
+function bankRow(b, hit) {
+  const sets = (b.cardsets || []).map(id => S.cardsets[id]).filter(s => s && !s.deleted && (isParent() || s.kid === USERS[ui.user].kid));
+  return `<div class="bank-item"><div class="row-main"><b>${H(b.title)}</b>${b.level ? ` <span class="small muted">· ${H(b.level)}</span>` : ''}</div>
+    <div class="tchips">${(b.topics || []).map(t => `<span class="${hit && hit.includes(t) ? 'hit' : ''}">${H(t)}</span>`).join('')}</div>
+    ${(b.notes || []).map(n => `<div class="callout warn small">${H(n)}</div>`).join('')}
+    <div class="small muted">${H(b.source || '')}${b.hasSolutions ? ' · כולל פתרונות' : ''}</div>
+    <div class="actions">${b.fileUrl ? `<a class="btn soft" href="${H(b.fileUrl)}" target="_blank" rel="noopener">פתיחת המבחן ↗</a>` : ''}
+      ${sets.map(st => `<button class="btn" data-action="card-start" data-set="${H(st.id)}">${I('study')}כרטיסיות: ${H(st.title)}</button>`).join('')}</div>
+    ${isParent() ? `<form class="f inline-form bankform" data-id="${H(b.id)}"><div class="field"><label for="bk-${H(b.id)}">קישור לקובץ (למשל מ-Google Drive)</label><input id="bk-${H(b.id)}" name="url" type="url" inputmode="url" dir="ltr" placeholder="https://" value="${H(b.fileUrl || '')}"></div><button class="btn ghost" type="submit">שמירת הקישור</button></form>` : ''}</div>`;
+}
+function bankForExam(e) {
+  if (!EXAMISH.includes(e.type) || isOff(e) || e.source !== 'school') return '';
+  const list = bankMatches(e); if (!list.length) return '';
+  const m = materialFor(e), known = m && (m.topics || []).length;
+  return `<div class="card soft-card"><h3>מבחנים דומים מהמאגר</h3>
+    <p class="small muted" style="margin:0">${known ? 'לפי הנושאים שנמסרו למבחן הזה. הנושאים המשותפים מודגשים.' : 'הנושאים של המבחן הזה עוד לא נמסרו, לכן מוצגים כל המבחנים במקצוע ובשכבה.'}</p>
+    <div class="rows">${list.slice(0, 4).map(x => bankRow(x.b, x.hit)).join('')}</div></div>`;
+}
+function bankSectionHTML(kids) {
+  const grades = kids.map(k => profile(k).grade).filter(Boolean);
+  const items = Object.values(S.bank || {}).filter(b => b && !b.deleted && (isParent() || grades.includes(b.grade)));
+  if (!items.length) return '';
+  const bySubj = {}; items.forEach(b => { (bySubj[b.subject] = bySubj[b.subject] || []).push(b); });
+  return `<div class="screen-head" style="margin-top:22px"><h2>מאגר מבחנים</h2><p>מבחנים לתרגול שההורים אספו. בכרטיס של מבחן קרוב יופיעו המבחנים שמתאימים לנושאים שלו.</p></div>
+    ${Object.keys(bySubj).map(sj => `<div class="card"><h3>${H(sj)}</h3><div class="rows">${bySubj[sj].sort((a, b) => (a.order || 0) - (b.order || 0)).map(b => bankRow(b, null)).join('')}</div></div>`).join('')}`;
+}
 function matEditSheet(m) {
   const e = findEvent(m.id); if (!e) return '';
   const cur = materialFor(e) || {}, msg = cur.msg || {};
@@ -3227,7 +3279,8 @@ function practiceHTML() {
   return `<div class="screen-head"><h1>תרגול בכרטיסיות</h1><p>שאלה אחת בכל פעם, עם בדיקה, תשובה נכונה והסבר. ההתקדמות נשמרת לכל ילד בנפרד.${isParent() ? ' הורים יכולים לנסות – התשובות של הורה לא נשמרות בהתקדמות של הילד.' : ''}</p></div>
     ${notes.join('')}
     ${sets.length ? `<div class="grid2">${sets.map(card).join('')}</div>` : '<div class="empty">עדיין אין ערכות. ערכות נבנות רק מחומר מבחן מאומת.</div>'}
-    <p class="small muted">השאלות כאן נכתבו לפי החומר שנמסר, ואינן שאלות רשמיות של המורה.</p>`;
+    <p class="small muted">השאלות כאן נכתבו לפי החומר שנמסר, ואינן שאלות רשמיות של המורה.</p>
+    ${bankSectionHTML(kids)}`;
 }
 function cardStart(setId, mode) {
   const s = S.cardsets[setId]; if (!s) return;
@@ -3448,6 +3501,10 @@ actions.logout = el => { if (CLOUD.locked) { ui.modal = { kind:'cloudinfo' }; re
 document.addEventListener('submit', ev => {
   const f = ev.target, fd = new FormData(f), d = Object.fromEntries(fd);
   if (f.id === 'evform') v7SaveEvent(f, fd);
+  if (f.classList.contains('bankform')) {
+    const b = S.bank[f.dataset.id], url = String(d.url || '').trim();
+    if (b) { if (url && !/^https:\/\//.test(url)) { toast('הקישור צריך להתחיל ב-https://'); return; } b.fileUrl = url; save(); render(); toast(url ? 'הקישור נשמר' : 'הקישור הוסר'); }
+  }
   if (f.id === 'namesform') { S.names = { ...(S.names || {}) }; for (const k in NAME_DEFAULTS) S.names[k] = String(d[k] || '').trim().slice(0, 20); save(); render(); toast('השמות נשמרו'); }
   if (f.id === 'matform') v7SaveMaterial(f, fd);
   if (f.id === 'cardnum') {
