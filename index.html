@@ -1455,7 +1455,7 @@ if (typeof module !== 'undefined') module.exports = FSCore;
       <p class="gate-sub">${removed ? 'המכשיר הזה כבר לא מחובר למשפחה. כדי לחבר אותו שוב, צריך קוד חדש מההורה המנהל/ת.' : 'כדי לראות את היומן, מחברים את המכשיר פעם אחת עם קוד שמקבלים מההורה המנהל/ת. אין סיסמאות.'}</p>
       ${errHTML()}${codeForm('קוד חיבור')}
       ${removed ? '' : `<div class="gate-or">מנהל/ת המשפחה?</div><button class="btn soft" data-web="google" ${W.busy ? 'disabled' : ''}>כניסה עם Google (במחשב)</button>`}
-      <p class="small muted gate-foot">אחרי החיבור, באייפון: כפתור השיתוף ← "הוספה למסך הבית".</p>`);
+      <p class="small muted gate-foot">באייפון: קודם מוסיפים למסך הבית (כפתור השיתוף ← "הוספה למסך הבית"), פותחים מהסמל החדש, ורק שם מקלידים את הקוד.</p>`);
   }
   function settingsHTML() {
     const m = W.member; if (!m) return '';
@@ -1470,7 +1470,7 @@ if (typeof module !== 'undefined') module.exports = FSCore;
       <form class="f" id="webinvite"><div class="field"><label for="web-who">קוד חיבור בשביל</label><select id="web-who" name="who">${opt('par2')}${opt('kid1')}${opt('kid2')}${opt('par1')}</select></div>
         <button class="btn" type="submit" ${W.busy ? 'disabled' : ''}>יצירת קוד חד-פעמי</button></form>
       ${nc ? `<div class="callout ok"><div>הקוד בשביל <b>${esc(nm(nc.user))}</b>:</div><div class="web-code" dir="ltr">${fmtCode(nc.code)}</div>
-        <div class="small">בתוקף ${CODE_HOURS} שעות, לשימוש פעם אחת. בטלפון: פותחים ב-Safari את <span dir="ltr">${esc(siteURL())}</span>, מקלידים את הקוד, ואז כפתור השיתוף ← "הוספה למסך הבית".</div></div>` : ''}
+        <div class="small">בתוקף ${CODE_HOURS} שעות, לשימוש פעם אחת. באייפון: פותחים ב-Safari את <span dir="ltr">${esc(siteURL())}</span>, כפתור השיתוף ← "הוספה למסך הבית", פותחים מהסמל החדש, ורק שם מקלידים את הקוד.</div></div>` : ''}
       <div class="rows">${list}</div>
       <button class="btn ghost" data-web="members">${W.members ? 'רענון הרשימה' : 'הצגת המכשירים המחוברים'}</button>
       <details class="fold" ${W.importInfo ? 'open' : ''}><summary>העברת נתונים מהגרסה הקודמת</summary><div class="fold-body">
